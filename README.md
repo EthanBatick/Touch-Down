@@ -1,0 +1,1 @@
+This is my first full Unity Game about landing a rocket booster. I've provided the project here for people to develop further on as well as different builds you may download to play. Thanks for taking the time to check this out!
