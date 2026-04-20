@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Unity Web Player | TouchDown1</title>
+    <link rel="shortcut icon" href="TemplateData/favicon.ico">
+    <link rel="stylesheet" href="TemplateData/style.css">
+  </head>
+  <body>
+    <div id="unity-container" class="unity-desktop">
+      <canvas id="unity-canvas" width="960" height="600" tabindex="-1"></canvas>
+
+      <div id="fullscreen-gate">
+        <div id="fullscreen-panel">
+          <div id="fullscreen-title">Fullscreen Required</div>
+          <div id="fullscreen-subtitle">
+            TouchDown is meant to be played in fullscreen mode.
+            Click below to continue.
+          </div>
+          <button id="fullscreen-gate-button" type="button">ENTER FULLSCREEN</button>
+          <div id="fullscreen-hint">The game will stay locked until fullscreen is enabled.</div>
+        </div>
+      </div>
+
+      <div id="unity-loading-bar">
+        <div id="unity-logo"></div>
+        <div id="unity-progress-bar-empty">
+          <div id="unity-progress-bar-full"></div>
+        </div>
+      </div>
+
+      <div id="unity-warning"></div>
+
+      <div id="unity-footer">
+        <div id="unity-logo-title-footer"></div>
+        <div id="unity-fullscreen-button" title="Enter Fullscreen"></div>
+        <div id="unity-build-title">TouchDown1</div>
+      </div>
+    </div>
+
+    <script>
+      var canvas = document.querySelector("#unity-canvas");
+      var unityInstanceRef = null;
+      var fullscreenGate = document.querySelector("#fullscreen-gate");
+      var fullscreenGateButton = document.querySelector("#fullscreen-gate-button");
+      var fullscreenFooterButton = document.querySelector("#unity-fullscreen-button");
+
+      function unityShowBanner(msg, type) {
+        var warningBanner = document.querySelector("#unity-warning");
+        function updateBannerVisibility() {
+          warningBanner.style.display = warningBanner.children.length ? "block" : "none";
+        }
+        var div = document.createElement("div");
+        div.innerHTML = msg;
+        warningBanner.appendChild(div);
+        if (type == "error") {
+          div.style = "background: red; padding: 10px;";
+        } else {
+          if (type == "warning") div.style = "background: yellow; padding: 10px;";
+          setTimeout(function () {
+            warningBanner.removeChild(div);
+            updateBannerVisibility();
+          }, 5000);
+        }
+        updateBannerVisibility();
+      }
+
+      function isFullscreenActive() {
+        return !!(
+          document.fullscreenElement ||
+          document.webkitFullscreenElement ||
+          document.msFullscreenElement
+        );
+      }
+
+      function updateFullscreenGate() {
+        if (isFullscreenActive()) {
+          fullscreenGate.classList.add("hidden");
+          canvas.style.pointerEvents = "auto";
+        } else {
+          fullscreenGate.classList.remove("hidden");
+          canvas.style.pointerEvents = "none";
+        }
+      }
+
+      function requestGameFullscreen() {
+        if (unityInstanceRef) {
+          unityInstanceRef.SetFullscreen(1);
+        } else if (canvas.requestFullscreen) {
+          canvas.requestFullscreen();
+        } else if (canvas.webkitRequestFullscreen) {
+          canvas.webkitRequestFullscreen();
+        } else if (canvas.msRequestFullscreen) {
+          canvas.msRequestFullscreen();
+        }
+      }
+
+      fullscreenGateButton.addEventListener("click", requestGameFullscreen);
+      fullscreenFooterButton.addEventListener("click", requestGameFullscreen);
+
+      document.addEventListener("fullscreenchange", updateFullscreenGate);
+      document.addEventListener("webkitfullscreenchange", updateFullscreenGate);
+      document.addEventListener("msfullscreenchange", updateFullscreenGate);
+
+      var buildUrl = "Build";
+      var loaderUrl = buildUrl + "/build-web_browser.loader.js";
+      var config = {
+        arguments: [],
+        dataUrl: buildUrl + "/build-web_browser.data",
+        frameworkUrl: buildUrl + "/build-web_browser.framework.js",
+        codeUrl: buildUrl + "/build-web_browser.wasm",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "DefaultCompany",
+        productName: "TouchDown1",
+        productVersion: "1.0",
+        showBanner: unityShowBanner,
+      };
+
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        var meta = document.createElement("meta");
+        meta.name = "viewport";
+        meta.content = "width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes";
+        document.getElementsByTagName("head")[0].appendChild(meta);
+        document.querySelector("#unity-container").className = "unity-mobile";
+        canvas.className = "unity-mobile";
+      } else {
+        canvas.style.width = "960px";
+        canvas.style.height = "600px";
+      }
+
+      document.querySelector("#unity-loading-bar").style.display = "block";
+      updateFullscreenGate();
+
+      var script = document.createElement("script");
+      script.src = loaderUrl;
+      script.onload = () => {
+        createUnityInstance(canvas, config, (progress) => {
+          document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
+        }).then((unityInstance) => {
+          unityInstanceRef = unityInstance;
+          document.querySelector("#unity-loading-bar").style.display = "none";
+          updateFullscreenGate();
+        }).catch((message) => {
+          alert(message);
+        });
+      };
+
+      document.body.appendChild(script);
+    </script>
+  </body>
+</html>
